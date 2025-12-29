@@ -1,9 +1,0 @@
-
-.databricks
-.vnev
-build*
-dist*
-*.egg-info*
-*.DS_Store*
-.idea*
-*.pyc

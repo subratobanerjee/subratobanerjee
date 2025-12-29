@@ -1,7 +1,0 @@
-{
-  "catalog_list": ["horizon", "coretech"],
-  "schema_list": {
-    "horizon": ["raw", "intermediate", "managed"],
-    "coretech": ["sso"]
-  }
-}
