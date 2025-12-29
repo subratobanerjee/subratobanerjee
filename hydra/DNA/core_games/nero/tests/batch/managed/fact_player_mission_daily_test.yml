@@ -1,0 +1,30 @@
+# Date configuration - supports both single date and date range
+date_config:
+  mode: "range"  # Options: "today", "single", "range"
+  from_date: "2025-06-19"  # Used when mode is "single" or "range"
+  to_date: "2025-06-25"    # Used when mode is "range"
+  date_column: "dw_update_ts"  # Column to apply date filter on
+
+datasets:
+  - name: nero{env}.managed.fact_player_mission_daily
+    attributes:
+      business_unit: ["Core Games"]
+      data_layer: ["managed"]
+      data_owner: ["Data Engineering"]
+      title_name: ["nero"]
+      pii: false
+      priority: ["P1"]
+    checks:
+      - name: row_count
+      - name: null_check
+        check_name: null_in_fact_player_mission_daily
+        columns: [date, player_id, platform, service, country_code, session_id, mission_run_id, mission_num, mission_name]
+
+      - name: duplicate
+        check_name: dup_in_fact_player_mission_daily
+        columns:
+          - [date, player_id, platform, service, country_code, session_id, mission_run_id, mission_num, mission_name]
+
+threshold_percent: 0
+warn_percentage: 0.0
+fail_percentage: 0.0

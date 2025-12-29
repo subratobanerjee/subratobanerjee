@@ -1,0 +1,167 @@
+# This workflow validates, deploys, and runs the specified bundle
+# within a pre-production target named "dev".
+name: "Databricks Pyspark Unit Tests"
+
+# Ensure that only a single job or workflow using the same concurrency group
+# runs at a time.
+concurrency: 1
+
+# Trigger this workflow whenever a pull request is opened against the repo's
+# dev branch or run it manually.
+on:
+  workflow_dispatch:
+    inputs:
+      bundle:
+        type: choice
+        description: Bundle to deploy
+        options:
+        - common
+        - core_games
+        - coretech
+        - horizon
+        - standard_metrics
+        - sports
+        - utils
+      game_to_test:
+        type: choice
+        description: Game to test
+        options:
+        - inverness
+        - horizon
+        - wwe
+        - bluenose
+
+#  pull_request: 
+#    branches: [dev, stg, prd ]
+env:
+  DBX_SP_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+  DATABRICKS_CLIENT_ID: ${{ secrets.DBX_DEV_CLIENT_ID }}
+  DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_DEV_CLIENT_SECRET }}
+
+jobs:
+  # Used by the "pipeline_update" job to deploy the bundle.
+  # Bundle validation is automatically performed as part of this deployment.
+  # If validation fails, this workflow fails.
+  deploy_bundle:
+    name: "deploy bundle"
+    runs-on: ubuntu-latest
+    env:
+      DBX_SP_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DBX_DEV_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_DEV_CLIENT_SECRET }}
+
+    steps:
+    - uses: actions/checkout@v3
+ 
+      # Download the Databricks CLI.
+      # See https://github.com/databricks/setup-cli
+    - uses: databricks/setup-cli@main
+      
+      # Deploy the bundle to the "qa" target as defined
+      # in the bundle's settings file.
+    - run: cd DNA/${{ github.event.inputs.bundle }} && databricks bundle deploy --target dev
+      working-directory: .
+      env:
+        DATABRICKS_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+        DATABRICKS_BUNDLE_ENV: dev
+    
+    - name: Verify Databricks CLI Configuration
+      run: cd DNA/${{ github.event.inputs.bundle }} && databricks jobs list --output JSON
+      working-directory: .
+      env:
+        DATABRICKS_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+        DATABRICKS_BUNDLE_ENV: dev
+
+  
+  run_tests:
+    name: "Run Unit Tests"
+    runs-on: ubuntu-latest
+    needs: deploy_bundle
+    env:
+      DBX_SP_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+      DATABRICKS_HOST: $DATABRICKS_HOST
+      DATABRICKS_CLIENT_ID: ${{ secrets.DBX_DEV_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DBX_DEV_CLIENT_SECRET }}
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # gets the test directory from the bundle name
+    - name: set test directory
+      run: |
+        case "${{ github.event.inputs.game_to_test }}" in
+          inverness) VALUE="DNA/core_games/inverness/tests/" ;; 
+          horizon) VALUE="DNA/horizon/tests/" ;; 
+          wwe) VALUE="DNA/sports/wwe/tests/" ;; 
+          bluenose) VALUE="DNA/sports/bluenose/tests/" ;; 
+          *) VALUE="Unknown Environment" ;; 
+        esac
+        echo "TEST_DIRECTORY=$VALUE" >> $GITHUB_ENV
+      
+    - name: Echo test directory
+      run: echo $TEST_DIRECTORY
+
+      # Download the Databricks CLI.
+      # See https://github.com/databricks/setup-cli
+    - uses: databricks/setup-cli@main
+
+    - name: Get pytest executer job id  
+      run: |
+        set -e  # Stop execution on error
+        cd DNA/${{ github.event.inputs.bundle }}
+        databrick_job_id=$(databricks jobs list --output JSON | jq -r --arg job_name "${{ github.event.inputs.game_to_test }}_dq_unit_checks" --arg job_env "data_engineering" '.[] | select(.settings.name | test($job_name; "i")) | select(.settings.tags.dev | test($job_env; "i")) | .job_id')
+        echo "databrick_job_id=$databrick_job_id" >> $GITHUB_ENV
+      working-directory: .
+      env:
+        DATABRICKS_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+        DATABRICKS_BUNDLE_ENV: dev
+    
+    - name: Echo databrick_job_id
+      run: echo $databrick_job_id
+    
+    - name: Run Unit Tests
+      run: |
+        set -e  # Stop execution on error
+        cd "DNA/${{ github.event.inputs.bundle }}"
+        databricks jobs run-now --json "$(jq -n \
+          --arg jobId "$databrick_job_id" \
+          --arg env "dev" \
+          --arg bundleName "${{ github.event.inputs.bundle }}_bundle" \
+          --arg testDir "$TEST_DIRECTORY" \
+          '{ "job_id": $jobId, "job_parameters": { "environment": $env, "bundle_name": $bundleName, "test_directory": $testDir }}')" > result.json
+        
+        # Check the result of the job and store relevant information
+        job_run_id=$(cat result.json | jq -r '.tasks[0].run_id')
+        echo "Job run ID: $job_run_id"
+        echo "job_run_id=$job_run_id" >> $GITHUB_ENV
+      working-directory: .
+      env:
+        DATABRICKS_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+        DATABRICKS_BUNDLE_ENV: dev
+    
+    - name: Echo job_run_id
+      run: echo $job_run_id
+
+    - name: Fetch and display the Pytest results
+      run: |
+        set -e  # Stop execution on error
+        cd "DNA/${{ github.event.inputs.bundle }}"
+        # Fetch the output logs from the notebook
+        logs=$(databricks jobs get-run-output $job_run_id)
+        echo "Job logs: $logs"
+        
+        pytest_results=$(echo $logs | jq -r '.notebook_output.result')
+        echo "Pytest Results: $pytest_results"
+        
+        # Fail the job if pytest failed
+        if [[ "$pytest_results" == *"FAILED"* ]]; then
+          echo $pytest_results
+          exit 1
+        fi
+      working-directory: .
+      env:
+        DATABRICKS_TOKEN: ${{ secrets.DBX_SP_TOKEN }}
+        DATABRICKS_BUNDLE_ENV: dev
+
+    - name: Complete CI/CD Run
+      run: echo "CI/CD Pipeline Finished!Unit Tests Passed"

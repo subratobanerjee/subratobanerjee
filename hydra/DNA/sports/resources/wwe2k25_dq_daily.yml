@@ -1,0 +1,618 @@
+# The main job for batch managed.
+resources:
+  jobs:
+    wwe2k25_dq_daily:
+      name: wwe2k25_dq_daily
+      max_concurrent_runs: 1
+
+      schedule:
+        quartz_cron_expression: 0 0 6 ? * * *
+        timezone_id: UTC
+        pause_status: ${var.schedule_status}
+
+      timeout_seconds: 10800
+
+      health:
+        rules:
+          - metric: RUN_DURATION_SECONDS
+            op: GREATER_THAN
+            value: 10800
+
+      tasks:
+        - task_key: fact_player_game_status_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/fact_player_game_status_daily_test.yml
+
+        - task_key: agg_game_status_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/agg_game_status_daily_test.yml
+
+        - task_key: fact_player_igc_purchase_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/fact_player_igc_purchase_daily_test.yml
+
+        - task_key: fact_player_matchmaking_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/intermediate/fact_player_matchmaking_test.yml
+
+        - task_key: fact_player_igc_earn_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/fact_player_igc_earn_daily_test.yml
+
+        - task_key: fact_player_item_igc_spend_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/fact_player_item_igc_spend_daily_test.yml
+
+        - task_key: agg_item_igc_spend_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/agg_item_igc_spend_daily_test.yml
+
+        - task_key: agg_igc_purchase_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/agg_igc_purchase_daily_test.yml
+
+        - task_key: fact_player_session_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/fact_player_session_daily_test.yml
+
+        - task_key: agg_igc_earn_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/agg_igc_earn_daily_test.yml
+
+        - task_key: sku_lookup_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/sku_lookup_test.yml
+
+        - task_key: fact_player_store_interactions_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/fact_player_store_interactions_daily_test.yml
+
+        - task_key: agg_store_interactions_daily_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/agg_store_interactions_daily_test.yml
+
+        - task_key: fact_player_summary_ltd_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/managed/fact_player_summary_ltd_test.yml
+
+        - task_key: fact_player_transaction_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/intermediate/fact_player_transaction_test.yml
+
+        - task_key: fact_player_session_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/intermediate/fact_player_session_test.yml
+
+        - task_key: fact_player_activity_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/intermediate/fact_player_activity_test.yml
+
+        # raw tables
+        - task_key: achievementstatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/achievementstatus_test.yml
+
+        - task_key: bookingcard_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/bookingcard_test.yml
+
+        - task_key: careermatch_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/careermatch_test.yml
+
+        - task_key: careerstart_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/careerstart_test.yml
+
+        - task_key: careerterminate_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/careerterminate_test.yml
+
+        - task_key: caseditoreditnum_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/caseditoreditnum_test.yml
+
+        - task_key: clientdevice_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/clientdevice_test.yml
+
+        - task_key: creationupload_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/creationupload_test.yml
+
+        - task_key: dlclist_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/dlclist_test.yml
+
+        - task_key: ftuestatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/ftuestatus_test.yml
+
+        - task_key: generaltransaction_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/generaltransaction_test.yml
+
+        - task_key: gmchallengecomplete_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/gmchallengecomplete_test.yml
+
+        - task_key: gmonlinesession_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/gmonlinesession_test.yml
+
+        - task_key: gmrosterstatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/gmrosterstatus_test.yml
+
+        - task_key: loadcareer_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/loadcareer_test.yml
+
+        - task_key: lobbycreation_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/lobbycreation_test.yml
+
+        - task_key: lobbyexit_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/lobbyexit_test.yml
+
+        - task_key: lobbyjoin_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/lobbyjoin_test.yml
+
+        - task_key: lobbymatchmakestatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/lobbymatchmakestatus_test.yml
+
+        - task_key: lobbysearch_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/lobbysearch_test.yml
+
+        - task_key: matchfound_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchfound_test.yml
+
+        - task_key: matchmake_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchmake_test.yml
+
+        - task_key: matchmakecreate_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchmakecreate_test.yml
+
+        - task_key: matchmakeend_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchmakeend_test.yml
+
+        - task_key: matchmakestart_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchmakestart_test.yml
+
+        - task_key: matchmakingstatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchmakingstatus_test.yml
+
+        - task_key: matchperfstatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchperfstatus_test.yml
+
+        - task_key: matchrating_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchrating_test.yml
+
+        - task_key: matchroster_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchroster_test.yml
+
+        - task_key: matchstatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/matchstatus_test.yml
+
+        - task_key: modestatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/modestatus_test.yml
+
+        - task_key: mycareercharstatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/mycareercharstatus_test.yml
+
+        - task_key: mycareerprogression_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/mycareerprogression_test.yml
+
+        - task_key: mycareerstorystatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/mycareerstorystatus_test.yml
+
+        - task_key: myfactionchallengestatus_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/myfactionchallengestatus_test.yml
+
+        - task_key: myfactionprogression_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/myfactionprogression_test.yml
+
+        - task_key: nopurchase_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/nopurchase_test.yml
+
+        - task_key: objectiveavailable_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/objectiveavailable_test.yml
+
+        - task_key: objectivecomplete_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/objectivecomplete_test.yml
+
+        - task_key: orion_ftue_status_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/orion_ftue_status_test.yml
+
+        - task_key: orion_mysuperstar_status_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/orion_mysuperstar_status_test.yml
+
+        - task_key: orion_quest_status_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/orion_quest_status_test.yml
+
+        - task_key: pinminigame_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/pinminigame_test.yml
+
+        - task_key: player_action_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/player_action_test.yml
+
+        - task_key: sessionended_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/sessionended_test.yml
+
+        - task_key: sessionflow_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/sessionflow_test.yml
+
+        - task_key: sessionstarted_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/sessionstarted_test.yml
+
+        - task_key: ssoaccount_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/ssoaccount_test.yml
+
+        - task_key: ssoaccountscreen_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/ssoaccountscreen_test.yml
+
+        - task_key: storeinteraction_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/storeinteraction_test.yml
+
+        - task_key: universeplay_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/universeplay_test.yml
+
+        - task_key: universeprogress_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/universeprogress_test.yml
+
+        - task_key: usepowercard_test
+          job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/sports/wwe/wwe2k25/tests/batch/raw/usepowercard_test.yml
+
+      job_clusters:
+        - job_cluster_key: wwe2k25_dq_daily_cluster${var.environment}
+          new_cluster:
+            data_security_mode: SINGLE_USER
+            spark_version: 16.4.x-scala2.12
+            aws_attributes:
+              availability: ON_DEMAND
+            node_type_id: ${var.node_type_id}
+            driver_node_type_id: ${var.driver_node_type_id}
+            num_workers: ${var.num_workers}
+            init_scripts:
+              - workspace:
+                  destination: /Shared/datadog/dd_init.sh
+              - workspace:
+                  destination: /Shared/soda/soda_setup.sh
+            spark_conf:
+              'spark.driver.extraJavaOptions': '-XX:+UseZGC'
+            spark_env_vars:
+              DD_API_KEY: "{{secrets/data-engineering/dd_api_key}}"
+              prod_api_key_id: "{{secrets/soda-secrets/prod_api_key_id}}"
+              prod_api_key_secret: "{{secrets/soda-secrets/prod_api_key_secret}}"
+            custom_tags:
+              owner: "Data Engineering"
+
+      tags:
+        business_unit: "Sports"
+        title: "WWE 2K25"
+        data_layer: "managed"
+        environment: ${var.environment}
+        owner: "Data Engineering"
+
+      permissions:
+        - level: CAN_MANAGE
+          group_name: "dna live"
+        - level: CAN_MANAGE
+          group_name: "data engineering"

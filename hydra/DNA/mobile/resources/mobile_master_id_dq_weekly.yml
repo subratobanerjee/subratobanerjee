@@ -1,0 +1,70 @@
+resources:
+  jobs:
+    mobile_master_id_dq_weekly:
+      name: mobile_master_id_dq_weekly
+      max_concurrent_runs: 1
+
+      webhook_notifications:
+        on_failure:
+          - id: ${var.slack_webhook}
+
+      # Run DQ shortly after the weekly Master ID build
+      schedule:
+        quartz_cron_expression: "0 0 2 ? * MON"   # Monday 02:00 UTC
+        timezone_id: UTC
+        pause_status: ${var.schedule_status}
+
+      tasks:
+        - task_key: nba2km_master_id_map_dq
+          job_cluster_key: master_id_dq_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/mobile/master_id/tests/batch/managed/nba2km_mobile_master_id.yml
+
+        - task_key: wwesc_master_id_map_dq
+          job_cluster_key: master_id_dq_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/mobile/master_id/tests/batch/managed/wwesc_mobile_master_id.yml
+
+      job_clusters:
+        - job_cluster_key: master_id_dq_cluster${var.environment}
+          new_cluster:
+            data_security_mode: SINGLE_USER
+            spark_version: 16.4.x-scala2.12
+            aws_attributes:
+              availability: ON_DEMAND
+            node_type_id: ${var.node_type_id}
+            driver_node_type_id: ${var.driver_node_type_id}
+            autoscale:
+              min_workers: ${var.num_workers}
+              max_workers: ${var.max_num_workers}
+            init_scripts:
+              - workspace:
+                  destination: /Shared/datadog/dd_init.sh
+              - workspace:
+                  destination: /Shared/soda/soda_setup.sh
+            spark_conf:
+              "spark.driver.extraJavaOptions": "-XX:+UseZGC"
+            spark_env_vars:
+              DD_API_KEY: "{{secrets/data-engineering/dd_api_key}}"
+              prod_api_key_id: "{{secrets/soda-secrets/prod_api_key_id}}"
+              prod_api_key_secret: "{{secrets/soda-secrets/prod_api_key_secret}}"
+            custom_tags:
+              owner: "Data Engineering"
+
+      tags:
+        business_unit: "Mobile"
+        catalog: "mobile${var.environment}"
+        data_layer: "managed"
+        environment: ${var.environment}
+
+      permissions:
+        - level: CAN_MANAGE
+          group_name: "dna live"
+        - level: CAN_MANAGE
+          group_name: "data engineering"

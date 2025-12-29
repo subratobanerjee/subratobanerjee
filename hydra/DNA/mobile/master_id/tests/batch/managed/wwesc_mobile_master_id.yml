@@ -1,0 +1,39 @@
+date_config:
+  mode: "range"
+  from_date: "2000-01-01"
+  to_date: "2099-12-31"
+  date_column: "first_seen"
+
+
+datasets:
+  - name: mobile{env}.managed.wwesc_master_id_map
+    checks:
+      - name: row_count
+
+      - name: null_check
+        columns: [id_type, id, master_id, first_seen]
+
+      - name: duplicate
+        columns: [id_type, id]
+
+      - name: custom_sql
+        sql: |
+          WITH acct AS (
+            SELECT
+              COUNT(*) AS total_accts,
+              SUM(CASE WHEN master_id IS NULL THEN 1 ELSE 0 END) AS null_master_ids
+            FROM mobile{env}.managed.wwesc_master_id_map
+            WHERE id_type = 'acct_id'
+          )
+          SELECT
+            CASE
+              WHEN total_accts = 0 THEN 0
+              ELSE null_master_ids::float / total_accts
+            END AS metric
+          FROM acct
+        warn: "when > 0.01"
+        fail: "when > 0.05"
+
+threshold_percent: 0
+warn_percentage: 0.05
+fail_percentage: 0.15
