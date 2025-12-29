@@ -1,0 +1,218 @@
+# The main job for batch managed.
+resources:
+  jobs:
+    oak2_dq_daily:
+      name: oak2_dq_daily
+      max_concurrent_runs: 1
+
+      schedule:
+        quartz_cron_expression: 0 0 2/6 * * ?
+        timezone_id: UTC
+        pause_status: ${var.schedule_status}
+
+      tasks:
+        - task_key: platform_id_mapping_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/reference/platform_id_mapping_test.yml
+
+        - task_key: fact_player_activity_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/intermediate/fact_player_activity_test.yml
+
+        - task_key: fact_player_session_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/intermediate/fact_player_session_test.yml
+
+        - task_key: fact_player_character_game_status_daily_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_character_game_status_daily_test.yml
+
+        - task_key: fact_player_ftue_steps_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_ftue_steps_test.yml
+
+        - task_key: fact_player_game_status_daily_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_game_status_daily_test.yml
+
+        - task_key: fact_player_character_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_character_test.yml
+
+        - task_key: fact_player_ftue_daily_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_ftue_daily_test.yml
+
+        - task_key: fact_player_character_boss_fight_daily_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_character_boss_fight_daily_test.yml
+
+        - task_key: fact_player_discovery_daily_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_discovery_daily_test.yml
+
+        - task_key: fact_player_character_poa_stats_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_character_poa_stats_test.yml
+
+        - task_key: agg_core_metrics_daily_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/agg_core_metrics_daily_test.yml
+
+        - task_key: fact_player_character_mission_stats_daily_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_character_mission_stats_daily_test.yml
+
+        - task_key: cdp_bdl4_summary_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+              notebook_path: ../../../utils/run_soda_checks.py
+              base_parameters:
+                inputParam: '{"environment":"${var.environment}"}'
+                soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/cdp_bdl4_summary_test.yml
+
+        - task_key: cdp_bdl4_daily_events_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+              notebook_path: ../../../utils/run_soda_checks.py
+              base_parameters:
+                inputParam: '{"environment":"${var.environment}"}'
+                soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/cdp_bdl4_daily_events_test.yml
+
+        - task_key: fact_player_summary_ltd_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_summary_ltd_test.yml
+
+        - task_key: fact_player_entitlement_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/fact_player_entitlement_test.yml
+
+        - task_key: agg_character_creation_nrt_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/agg_character_creation_nrt_test.yml
+
+        - task_key: agg_installs_nrt_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/agg_installs_nrt_test.yml
+
+        - task_key: agg_logins_nrt_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/agg_logins_nrt_test.yml
+
+        - task_key: agg_mission_stats_nrt_test
+          job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../../../utils/run_soda_checks.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              soda_config_path: ../DNA/core_games/oak2/tests/batch/managed/agg_mission_stats_nrt_test.yml    
+              
+      # The managed cluster will use memory-optimized instances due to having to store state in memory
+      job_clusters:
+        - job_cluster_key: oak2_dq_daily_cluster${var.environment}
+          new_cluster:
+            spark_version: 16.4.x-scala2.12
+            data_security_mode: SINGLE_USER
+            aws_attributes:
+              availability: ON_DEMAND
+            node_type_id: m7gd.2xlarge
+            driver_node_type_id: m7gd.4xlarge
+            num_workers: 4
+            init_scripts:
+              - workspace: 
+                  destination: /Shared/datadog/dd_init.sh
+              - workspace:
+                  destination: /Shared/soda/soda_setup.sh
+            spark_conf:
+              'spark.driver.extraJavaOptions': '-XX:+UseZGC'
+            spark_env_vars:
+              DD_API_KEY: "{{secrets/data-engineering/dd_api_key}}"
+              prod_api_key_id: "{{secrets/soda-secrets/prod_api_key_id}}"
+              prod_api_key_secret: "{{secrets/soda-secrets/prod_api_key_secret}}"
+            custom_tags:
+              owner: "Data Engineering"
+      
+      tags:
+        business_unit: "Core Games"
+        title: "oak2"
+        catalog: "oak2${var.environment}"
+        data_layer: "managed"
+        environment: ${var.environment}
+
+      permissions:
+        - level: CAN_MANAGE
+          group_name: "dna live"
+        - level: CAN_MANAGE
+          group_name: "data engineering"

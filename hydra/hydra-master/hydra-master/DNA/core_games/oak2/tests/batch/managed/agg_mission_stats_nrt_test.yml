@@ -1,0 +1,30 @@
+# Date configuration - supports both single date and date range
+date_config:
+  mode: "range"  # Options: "today", "single", "range"
+  from_date: "2025-08-01"  # Used when mode is "single" or "range"
+  to_date: "2025-08-30"    # Used when mode is "range"
+  date_column: "dw_update_ts"  # Column to apply date filter on
+
+datasets:
+  - name: oak2{env}.managed.agg_mission_stats_nrt
+    attributes:
+      business_unit: ["Core Games"]
+      data_layer: ["managed"]
+      data_owner: ["Data Engineering"]
+      title_name: ["oak2"]
+      pii: false
+      priority: ["P1"]
+    checks:
+      - name: row_count
+      - name: null_check
+        check_name: null_in_agg_mission_stats_nrt
+        columns: [timestamp_10min_slice, title, platform]
+
+      - name: duplicate
+        check_name: dup_in_agg_mission_stats_nrt
+        columns:
+          - [timestamp_10min_slice, title, platform]
+
+threshold_percent: 0
+warn_percentage: 0.0
+fail_percentage: 0.0

@@ -1,0 +1,27 @@
+# Date configuration - supports both single date and date range
+date_config:
+  mode: "today"  # Options: "today", "single", "range"
+  from_date: "2025-04-24"  # Used when mode is "single" or "range"
+  to_date: "2025-04-25"    # Used when mode is "range"
+  date_column: "dw_insert_ts"  # Column to apply date filter on
+
+datasets:
+  - name: wwe2k25{env}.managed.agg_igc_earn_daily
+    attributes:
+      business_unit: ["Sports"]
+      data_layer: ["managed"]
+      data_owner: ["Data Engineering"]
+      title_name: ["wwe2k25"]
+      pii: false
+      priority: ["P1"]
+    checks:
+      - name: row_count
+      - name: null_check
+        columns: [date, game_mode, sub_mode]
+      - name: duplicate
+        columns:
+          - [date, merge_key]
+
+threshold_percent: 0
+warn_percentage: 0
+fail_percentage: 0

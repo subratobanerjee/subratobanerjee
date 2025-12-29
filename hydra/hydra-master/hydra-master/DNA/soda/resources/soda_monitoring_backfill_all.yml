@@ -1,0 +1,172 @@
+# utils/resources/soda_backfill_all.yml
+resources:
+  jobs:
+    soda_backfill_all:
+      name: soda_backfill_all
+      max_concurrent_runs: 1
+
+      job_clusters:
+        - job_cluster_key: uc_single_user
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: ${var.node_type_id}
+            driver_node_type_id: ${var.driver_node_type_id}
+            num_workers: ${var.num_workers}
+            autotermination_minutes: 30
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+            custom_tags:
+              ResourceClass: SingleNode
+            data_security_mode: SINGLE_USER
+            single_user_name: ${workspace.current_user.userName}
+
+      # Dev first (3 tasks) → then Prod (3 tasks). Everything runs sequentially.
+      tasks:
+        # ───────────── DEV ─────────────
+        - task_key: backfill_dev_check_results
+          job_cluster_key: uc_single_user
+          libraries:
+            - pypi: { package: requests }
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/soda_extract.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "dev",
+                  "endpoint": "check_results",
+                  "mode": "backfill",
+                  "from_datetime": "${var.from_datetime}",
+                  "page_size": ${var.page_size},
+                  "max_pages": ${var.max_pages},
+                  "secret_scope": "${var.soda_secret_scope}",
+                  "key_id_key": "${var.soda_key_id_key}",
+                  "key_secret_key": "${var.soda_key_secret_key}",
+                  "base_url": "${var.soda_base_url}",
+                  "table_name": "soda_dev.raw.check_results"
+                }
+
+        - task_key: backfill_dev_coverage_checks
+          depends_on:
+            - task_key: backfill_dev_check_results
+          job_cluster_key: uc_single_user
+          libraries:
+            - pypi: { package: requests }
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/soda_extract.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "dev",
+                  "endpoint": "coverage_checks",
+                  "mode": "backfill",
+                  "from_datetime": "${var.from_datetime}",
+                  "page_size": ${var.page_size},
+                  "max_pages": ${var.max_pages},
+                  "secret_scope": "${var.soda_secret_scope}",
+                  "key_id_key": "${var.soda_key_id_key}",
+                  "key_secret_key": "${var.soda_key_secret_key}",
+                  "base_url": "${var.soda_base_url}",
+                  "table_name": "soda_dev.raw.coverage_checks"
+                }
+
+        - task_key: backfill_dev_datasets
+          depends_on:
+            - task_key: backfill_dev_coverage_checks
+          job_cluster_key: uc_single_user
+          libraries:
+            - pypi: { package: requests }
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/soda_extract.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "dev",
+                  "endpoint": "datasets",
+                  "mode": "backfill",
+                  "from_datetime": "${var.from_datetime}",
+                  "page_size": ${var.page_size},
+                  "max_pages": ${var.max_pages},
+                  "secret_scope": "${var.soda_secret_scope}",
+                  "key_id_key": "${var.soda_key_id_key}",
+                  "key_secret_key": "${var.soda_key_secret_key}",
+                  "base_url": "${var.soda_base_url}",
+                  "table_name": "soda_dev.raw.coverage_datasets"
+                }
+
+        # ───────────── PROD ─────────────
+        - task_key: backfill_prod_check_results
+          depends_on:
+            - task_key: backfill_dev_datasets
+          job_cluster_key: uc_single_user
+          libraries:
+            - pypi: { package: requests }
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/soda_extract.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "prod",
+                  "endpoint": "check_results",
+                  "mode": "backfill",
+                  "from_datetime": "${var.from_datetime}",
+                  "page_size": ${var.page_size},
+                  "max_pages": ${var.max_pages},
+                  "secret_scope": "${var.soda_secret_scope}",
+                  "key_id_key": "${var.soda_key_id_key}",
+                  "key_secret_key": "${var.soda_key_secret_key}",
+                  "base_url": "${var.soda_base_url}",
+                  "table_name": "soda_prod.raw.check_results"
+                }
+
+        - task_key: backfill_prod_coverage_checks
+          depends_on:
+            - task_key: backfill_prod_check_results
+          job_cluster_key: uc_single_user
+          libraries:
+            - pypi: { package: requests }
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/soda_extract.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "prod",
+                  "endpoint": "coverage_checks",
+                  "mode": "backfill",
+                  "from_datetime": "${var.from_datetime}",
+                  "page_size": ${var.page_size},
+                  "max_pages": ${var.max_pages},
+                  "secret_scope": "${var.soda_secret_scope}",
+                  "key_id_key": "${var.soda_key_id_key}",
+                  "key_secret_key": "${var.soda_key_secret_key}",
+                  "base_url": "${var.soda_base_url}",
+                  "table_name": "soda_prod.raw.coverage_checks"
+                }
+
+        - task_key: backfill_prod_datasets
+          depends_on:
+            - task_key: backfill_prod_coverage_checks
+          job_cluster_key: uc_single_user
+          libraries:
+            - pypi: { package: requests }
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/soda_extract.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "prod",
+                  "endpoint": "datasets",
+                  "mode": "backfill",
+                  "from_datetime": "${var.from_datetime}",
+                  "page_size": ${var.page_size},
+                  "max_pages": ${var.max_pages},
+                  "secret_scope": "${var.soda_secret_scope}",
+                  "key_id_key": "${var.soda_key_id_key}",
+                  "key_secret_key": "${var.soda_key_secret_key}",
+                  "base_url": "${var.soda_base_url}",
+                  "table_name": "soda_prod.raw.coverage_datasets"
+                }
+
+      tags:
+        business_unit: "Data Engineering"
+        environment: ${var.environment}
+        owner: "Data Engineering"

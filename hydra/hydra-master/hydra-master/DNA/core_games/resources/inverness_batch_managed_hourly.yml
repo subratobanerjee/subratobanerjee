@@ -1,0 +1,126 @@
+# The main job for batch managed.
+resources:
+  jobs:
+    inverness_managed_hourly:
+      name: inverness_managed_hourly
+      max_concurrent_runs: 1
+
+      webhook_notifications:
+        on_failure:
+          - id: ${var.slack_webhook}
+
+      schedule:
+        quartz_cron_expression: 0 0 0/12 * * ?
+        timezone_id: UTC
+        pause_status: ${var.schedule_status}
+
+      tasks:
+        - task_key:  fact_player
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/managed/fact_player.py
+            base_parameters:
+              environment: '${var.environment}'
+              checkpoint: 'dbfs:/tmp/inverness/managed/batch/run${var.environment}/fact_player'
+
+
+        - task_key:  fact_player_entitlement
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/intermediate/fact_player_entitlement.py
+            base_parameters:
+              environment: '${var.environment}'
+              checkpoint: 'dbfs:/tmp/inverness/intermediate/batch/run${var.environment}/fact_player_entitlement'      
+
+
+        - task_key:  fact_player_campaign_summary
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/managed/fact_player_campaign_summary.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              checkpoint: 'dbfs:/tmp/inverness/managed/batch/run${var.environment}/fact_player_campaign_summary'
+          depends_on:
+            - task_key: fact_age_summary
+
+        - task_key:  fact_age_summary
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/managed/fact_age_summary.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+              checkpoint: 'dbfs:/tmp/inverness/managed/batch/run${var.environment}/fact_age_summary'
+
+        - task_key: fact_player_game_status_daily
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/managed/fact_player_game_status_daily.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+
+        - task_key:  fact_player_session_daily
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/managed/fact_player_session_daily.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+
+        - task_key:  agg_core_metrics_daily
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/managed/agg_core_metrics_daily.py
+            base_parameters:
+              environment: '${var.environment}'
+              checkpoint: 'dbfs:/tmp/inverness/managed/batch/run${var.environment}/agg_core_metrics_daily'
+          depends_on:
+            - task_key: fact_player_game_status_daily
+            - task_key: fact_player_campaign_summary  
+            - task_key: fact_player_session_daily  
+
+      
+
+        - task_key:  fact_igm_promo_daily
+          job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../inverness/src/batch/managed/fact_igm_promo_daily.py
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+
+      # The managed cluster will use memory-optimized instances due to having to store state in memory
+      job_clusters:
+        - job_cluster_key: inverness_managed_batch_cluster${var.environment}
+          new_cluster:
+            spark_version: 16.4.x-scala2.12
+            data_security_mode: SINGLE_USER
+            aws_attributes:
+              availability: ON_DEMAND
+            node_type_id: m7gd.2xlarge
+            driver_node_type_id: ${var.driver_node_type_id}
+            autoscale:
+              min_workers: ${var.num_workers}
+              max_workers: ${var.max_num_workers}
+            init_scripts:
+              - workspace: 
+                  destination: /Shared/datadog/dd_init.sh
+            spark_conf:
+              'spark.driver.extraJavaOptions': '-XX:+UseZGC'
+            spark_env_vars:
+              DD_API_KEY: "{{secrets/data-engineering/dd_api_key}}"
+            custom_tags:
+              owner: "Data Engineering"
+            cluster_log_conf:
+              dbfs:
+                destination: dbfs:/cluster-logs
+      
+      tags:
+        business_unit: "Core Games"
+        title: "Inverness"
+        catalog: "inverness${var.environment}"
+        data_layer: "managed"
+        environment: ${var.environment}
+
+      permissions:
+        - level: CAN_MANAGE
+          group_name: "dna live"
+        - level: CAN_MANAGE
+          group_name: "data engineering"

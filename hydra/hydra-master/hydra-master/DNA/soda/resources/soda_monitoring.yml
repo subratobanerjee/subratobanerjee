@@ -1,0 +1,81 @@
+resources:
+  jobs:
+    soda_monitoring_60m:
+      name: soda_monitoring_60m
+      max_concurrent_runs: 1
+
+      schedule:
+        quartz_cron_expression: "0 30 3,7,11,15,19,23 ? * *"
+        timezone_id: "UTC"
+        pause_status: ${var.schedule_status}
+
+      job_clusters:
+        - job_cluster_key: single_node
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: ${var.node_type_id}
+            driver_node_type_id: ${var.driver_node_type_id}
+            num_workers: 0
+            autotermination_minutes: 10
+            custom_tags:
+              ResourceClass: SingleNode
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*]
+            data_security_mode: SINGLE_USER
+            single_user_name: ${workspace.current_user.userName}
+            aws_attributes:
+              ebs_volume_count: ${var.ebs_volume_count}
+              ebs_volume_size: ${var.ebs_volume_size}
+              ebs_volume_type: ${var.ebs_volume_type}
+              # this is optional
+              # ebs_volume_iops: ${var.ebs_volume_iops}
+              # ebs_volume_throughput: ${var.ebs_volume_throughput}
+
+      tasks:
+        - task_key: ingest_check_results
+          job_cluster_key: single_node
+          libraries:
+            - pypi: { package: requests }
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/soda_extract.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "${var.soda_env}",
+                  "endpoint": "check_results",
+                  "mode": "window",
+                  "window_minutes": "${var.window_minutes}",
+                  "page_size": "${var.page_size}",
+                  "max_pages": "${var.max_pages}",
+                  "secret_scope": "${var.soda_secret_scope}",
+                  "key_id_key": "${var.soda_key_id_key}",
+                  "key_secret_key": "${var.soda_key_secret_key}",
+                  "base_url": "${var.soda_base_url}",
+                  "table_name": "${var.soda_catalog}.raw.check_results"
+                }
+
+        - task_key: aggregate_latest_today
+          depends_on:
+            - task_key: ingest_check_results
+          job_cluster_key: single_node
+          notebook_task:
+            notebook_path: ../src/soda_monitoring/last_check.py
+            base_parameters:
+              inputParam: |
+                {
+                  "environment": "${var.soda_env}",
+                  "raw_checks_table": "${var.soda_catalog}.raw.check_results",
+                  "managed_latest_table": "${var.soda_catalog}.managed.latest_checks"
+                }
+
+      tags:
+        business_unit: "Data Engineering"
+        environment: ${var.soda_env}
+        owner: "Data Engineering"
+
+      permissions:
+        - level: CAN_MANAGE
+          user_name: pedro.figueiredo@2k.com
+        - level: CAN_VIEW
+          group_name: "data engineering"

@@ -1,0 +1,77 @@
+# The main job for batch managed.
+resources:
+  jobs:
+    wwe2k25_reference_batch:
+      name: wwe2k25_reference_batch
+      max_concurrent_runs: 1
+
+      # webhook_notifications:
+      #   on_failure:
+      #     - id: ${var.slack_webhook}
+
+      schedule:
+        quartz_cron_expression: 0 30 14 ? * TUE
+        timezone_id: UTC
+        pause_status: ${var.schedule_status}
+
+      timeout_seconds: 7200
+      
+      health:
+        rules:
+          - metric: RUN_DURATION_SECONDS
+            op: GREATER_THAN
+            value: 7200
+
+      tasks:
+        - task_key: bundle_table
+          job_cluster_key: wwe2k25_reference_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../wwe/wwe2k25/src/reference/bundle_table.py        
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'   
+
+        - task_key: mf_cards
+          job_cluster_key: wwe2k25_reference_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../wwe/wwe2k25/src/reference/mf_cards.py        
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}' 
+
+        - task_key: card_table
+          job_cluster_key: wwe2k25_reference_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../wwe/wwe2k25/src/reference/card_table.py        
+            base_parameters:
+              inputParam: '{"environment":"${var.environment}"}'
+          depends_on:
+            - task_key: mf_cards   
+
+      job_clusters:
+        - job_cluster_key: wwe2k25_reference_batch_cluster${var.environment}
+          new_cluster:
+            spark_version: 15.2.x-scala2.12
+            aws_attributes:
+              availability: ON_DEMAND
+            node_type_id: ${var.node_type_id}
+            driver_node_type_id: ${var.driver_node_type_id}
+            num_workers: ${var.num_workers}
+            init_scripts:
+              - workspace:
+                  destination: /Shared/datadog/dd_init.sh
+            spark_env_vars:
+              DD_API_KEY: "{{secrets/data-engineering/dd_api_key}}"
+            custom_tags:
+              owner: "Data Engineering"
+      
+      tags:
+        business_unit: "Sports"
+        title: "WWE 2K25"
+        data_layer: "managed"
+        environment: ${var.environment}
+        owner: "Data Engineering"
+      
+      permissions:
+        - level: CAN_MANAGE
+          group_name: "dna live"
+        - level: CAN_MANAGE
+          group_name: "data engineering"

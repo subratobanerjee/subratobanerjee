@@ -1,0 +1,153 @@
+resources:
+  jobs:
+    t2gp_s3_ingestion:
+      name: t2gp_s3_ingestion
+      max_concurrent_runs: 1
+
+      continuous:
+        pause_status: ${var.schedule_status}
+        task_retry_mode: ON_FAILURE
+
+      webhook_notifications:
+        on_failure:
+          - id: ${var.slack_webhook}  
+
+      tasks:
+        - task_key: s3_stream_raw_ingest_t2gp
+          job_cluster_key: t2gp_s3_ingestion${var.environment}
+          python_wheel_task:
+            package_name: common
+            entry_point: s3_stream_raw_ingest_t2gp
+            parameters:
+              - --environment
+              - ${var.environment}
+              - --checkpoint_location
+              - dbfs:/tmp/t2gp/raw/run${var.environment}
+              - --bucket
+              - ${var.bucket}
+              - --bucket_folder
+              - ${var.bucket_folder}
+              - --s3_bucket
+              - s3://${var.bucket}/${var.bucket_folder}
+              - --target_catalog
+              - t2${var.environment}
+              - --target_schema
+              - t2gp_raw
+              - --product_id
+              - 2a0041fa85174ca19d01803957f975d1
+              - --target_product_id  
+              - horizon
+
+          libraries:
+            - whl: ${var.wheel_path}    
+
+
+        - task_key: s3_stream_raw_ingest_bluenose_t2gp
+          job_cluster_key: t2gp_s3_ingestion${var.environment}
+          python_wheel_task:
+            package_name: common
+            entry_point: s3_stream_raw_ingest_t2gp
+            parameters:
+              - --environment
+              - ${var.environment}
+              - --checkpoint_location
+              - dbfs:/tmp/t2gp/raw/bluenose/run${var.environment}
+              - --bucket
+              - ${var.bucket}
+              - --bucket_folder
+              - ${var.bucket_folder}
+              - --s3_bucket
+              - s3://${var.bucket}/${var.bucket_folder}
+              - --target_catalog
+              - t2${var.environment}
+              - --target_schema
+              - t2gp_raw
+              - --product_id
+              - 790e129b64724954ac6c16fad0d1607b
+              - --target_product_id  
+              - bluenose
+          libraries:
+            - whl: ${var.wheel_path}  
+
+        - task_key: s3_stream_raw_ingest_inverness_t2gp
+          job_cluster_key: t2gp_s3_ingestion${var.environment}
+          python_wheel_task:
+            package_name: common
+            entry_point: s3_stream_raw_ingest_t2gp
+            parameters:
+              - --environment
+              - ${var.environment}
+              - --checkpoint_location
+              - dbfs:/tmp/t2gp/raw/inverness/run${var.environment}
+              - --bucket
+              - ${var.bucket}
+              - --bucket_folder
+              - ${var.bucket_folder}
+              - --s3_bucket
+              - s3://${var.bucket}/${var.bucket_folder}
+              - --target_catalog
+              - t2${var.environment}
+              - --target_schema
+              - t2gp_raw
+              - --product_id
+              - d885935758854604911bbeb027f15dca
+              - --target_product_id  
+              - inverness
+          libraries:
+            - whl: ${var.wheel_path} 
+
+        - task_key: s3_stream_raw_ingest_hammer_t2gp
+          job_cluster_key: t2gp_s3_ingestion${var.environment}
+          python_wheel_task:
+            package_name: common
+            entry_point: s3_stream_raw_ingest_t2gp
+            parameters:
+              - --environment
+              - ${var.environment}
+              - --checkpoint_location
+              - dbfs:/tmp/t2gp/raw/hammer/run${var.environment}
+              - --bucket
+              - ${var.bucket}
+              - --bucket_folder
+              - ${var.bucket_folder}
+              - --s3_bucket
+              - s3://${var.bucket}/${var.bucket_folder}
+              - --target_catalog
+              - t2${var.environment}
+              - --target_schema
+              - t2gp_raw
+              - --product_id
+              - 52c337c121c7466596dcd826240bac18
+              - --target_product_id  
+              - hammer
+          libraries:
+            - whl: ${var.wheel_path} 
+
+      job_clusters:
+        - job_cluster_key: t2gp_s3_ingestion${var.environment}
+          new_cluster:
+            spark_version: 16.0.x-scala2.12
+            aws_attributes:
+              availability: ON_DEMAND
+            node_type_id: c7gd.xlarge
+            driver_node_type_id: c7gd.xlarge
+            num_workers: 1
+            init_scripts:
+              - workspace:
+                  destination: /Shared/datadog/dd_init.sh
+            spark_env_vars:
+              DD_API_KEY: "{{secrets/data-engineering/dd_api_key}}"
+            custom_tags:
+              owner: "Data Engineering"
+      
+      tags:
+        business_unit: "T2GP"
+        data_layer: "raw"
+        environment: ${var.environment}
+        owner: "Data Engineering"
+      
+      permissions:
+        - level: CAN_MANAGE
+          group_name: "dna live"
+        - level: CAN_MANAGE
+          group_name: "data engineering"

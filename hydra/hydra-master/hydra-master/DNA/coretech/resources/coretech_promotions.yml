@@ -1,0 +1,98 @@
+# The main job for batch managed.
+resources:
+  jobs:
+    coretech_promotions:
+      name: coretech_promotions
+      max_concurrent_runs: 1
+
+      webhook_notifications:
+        on_failure:
+          - id: ${var.slack_webhook}
+
+      schedule:
+        quartz_cron_expression: 0 0 1 ? * * *
+        timezone_id: UTC
+        pause_status: ${var.schedule_status}
+
+      tasks:
+        - task_key: inverness_promotions
+          job_cluster_key: coretech_promos_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../promotions/pull_promos_api.py
+            base_parameters:
+              environment: '${var.environment}'
+              title: 'inverness'
+              product_id: 'd885935758854604911bbeb027f15dca'
+              # product_group_id: '9bd01e5b8d924235aeb50423c88a70f5' - not required after promo endpoint update
+              sandbox_id: '1a68b76f8e4641e38ae9fef2a9864ca6'
+              backfill: 'false'
+
+        - task_key: bluenose_promotions
+          job_cluster_key: coretech_promos_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../promotions/pull_promos_api.py
+            base_parameters:
+              environment: '${var.environment}'
+              title: 'bluenose'
+              product_id: '790e129b64724954ac6c16fad0d1607b'
+              # product_group_id: '317c0552032c4804bb10d81b89f4c37e'
+              sandbox_id: '651b286be1194aab95243c38b6925ff1'
+              backfill: 'false'
+        
+        - task_key: bluenose_demo_promotions
+          job_cluster_key: coretech_promos_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../promotions/pull_promos_api.py
+            base_parameters:
+              environment: '${var.environment}'
+              title: 'bluenose'
+              product_id: '790e129b64724954ac6c16fad0d1607b'
+              # product_group_id: '886bcab8848046d0bd89f5f1ce3b057b'
+              sandbox_id: 'cf58de64d0a84721853cacc489367b9e'
+              backfill: 'false'
+          depends_on:
+            - task_key: bluenose_promotions
+        
+        - task_key: nero_promotions
+          job_cluster_key: coretech_promos_batch_cluster${var.environment}
+          notebook_task:
+            notebook_path: ../promotions/pull_promos_api.py
+            base_parameters:
+              environment: '${var.environment}'
+              title: 'nero'
+              product_id: '409f0a12f0004d9183e6f482dc99015f'
+              # product_group_id: 'c818ad1d80dd4638961b95d154151402'
+              sandbox_id: 'cda4a48b6e734ca7a8609804b847f55c'
+              backfill: 'false'
+
+      # The managed cluster will use memory-optimized instances due to having to store state in memory
+      job_clusters:
+        - job_cluster_key: coretech_promos_batch_cluster${var.environment}
+          new_cluster:
+            spark_version: 15.2.x-scala2.12
+            data_security_mode: SINGLE_USER
+            aws_attributes:
+              availability: ON_DEMAND
+            node_type_id: ${var.node_type_id}
+            driver_node_type_id: ${var.driver_node_type_id}
+            num_workers: ${var.num_workers}
+            init_scripts:
+              - workspace: 
+                  destination: /Shared/datadog/dd_init.sh
+            spark_env_vars:
+              DD_API_KEY: "{{secrets/data-engineering/dd_api_key}}"
+            custom_tags:
+              owner: "Data Engineering"
+      
+      tags:
+        business_unit: "Coretech"
+        title: "coretech"
+        catalog: "coretech${var.environment}"
+        data_layer: "managed"
+        environment: ${var.environment}
+
+      permissions:
+        - level: CAN_MANAGE
+          group_name: "dna live"
+        - level: CAN_MANAGE
+          group_name: "data engineering"

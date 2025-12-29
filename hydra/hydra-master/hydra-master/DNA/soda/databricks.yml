@@ -1,0 +1,109 @@
+bundle:
+  name: soda_bundle
+
+include:
+  - resources/soda_monitoring.yml
+
+variables:
+  schedule_status:
+    description: "Pause/Unpause job schedules"
+    default: PAUSED
+
+  # Cluster shape (cheap single node)
+  driver_node_type_id:
+    description: "Driver instance type"
+    default: m5.large
+  node_type_id:
+    description: "Worker node type (unused for single-node profile)"
+    default: m5.large
+  num_workers:
+    description: "Workers for single-node (keep 0)"
+    default: 0
+
+  # --- EBS settings (applied across all stages) ---
+  ebs_volume_count:
+    description: "Number of EBS volumes to attach"
+    default: "1"
+  ebs_volume_size:
+    description: "EBS volume size (GiB)"
+    default: "100"
+  ebs_volume_type:
+    description: "EBS volume type"
+    default: "GENERAL_PURPOSE_SSD"
+  # Optional gp3 specifics -> optional
+  # ebs_volume_iops:
+  #   description: "EBS volume IOPS (gp3)"
+  #   default: "3000"
+  # ebs_volume_throughput:
+  #   description: "EBS volume throughput MB/s (gp3)"
+  #   default: "125"
+
+  # Soda / API config
+  soda_env:
+    description: "Soda logical environment passed to scripts (dev/stg/prod)"
+    default: dev
+  soda_catalog:
+    description: "Unity Catalog where RAW/MANAGED live (e.g., soda_dev, soda_prod)"
+    default: soda_dev
+  soda_secret_scope:
+    description: "Databricks secret scope for Soda API keys"
+    default: soda-secrets
+  soda_key_id_key:
+    description: "Secret key name for API key id"
+    default: prod_api_key_id
+  soda_key_secret_key:
+    description: "Secret key name for API key secret"
+    default: prod_api_key_secret
+  soda_base_url:
+    description: "Soda Reporting API base URL"
+    default: "https://reporting.cloud.us.soda.io/v1"
+
+  # Ingest window & paging
+  window_minutes:
+    description: "Rolling window size in minutes for check_results"
+    default: "1440" #6h (will overlap 2 since soda api updates are every 4h)
+  page_size:
+    description: "Items per page"
+    default: "400"
+  max_pages:
+    description: "Max pages to fetch"
+    default: "500"
+
+sync:
+  paths:
+    - .
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://twok-dataeng.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/${bundle.name}/${bundle.target}
+    variables:
+      schedule_status: UNPAUSED
+      soda_env: dev
+      soda_catalog: soda_dev
+      soda_base_url: "https://reporting.cloud.us.soda.io/v1"
+
+  stg:
+    mode: development
+    workspace:
+      host: https://twok-dataeng.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/${bundle.name}/${bundle.target}
+    variables:
+      schedule_status: PAUSED
+      soda_env: stg
+      soda_catalog: soda_stg
+      soda_base_url: "https://reporting.cloud.us.soda.io/v1"
+
+  prod:
+    mode: production
+    workspace:
+      host: https://twok-data-eng-prod.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/${bundle.name}/${bundle.target}
+    variables:
+      schedule_status: UNPAUSED
+      soda_env: prod
+      soda_catalog: soda_prod
+      soda_base_url: "https://reporting.cloud.us.soda.io/v1"
